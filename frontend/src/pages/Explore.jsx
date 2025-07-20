@@ -24,13 +24,13 @@ const Explore = () => {
       {/* Background Video */}
       <video
         className="absolute top-0 left-0 w-full h-full object-cover z-0"
-        src="/background.mp4"
+        src="/bg.mp4"
         autoPlay
         loop
         muted
       />
       {/* Overlay */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-70 z-10" />
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black to-transparent bg-opacity-70 z-10" />
 
       {/* Content */}
       <div className="relative z-20 py-16 px-6">

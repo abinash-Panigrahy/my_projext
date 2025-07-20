@@ -1,6 +1,6 @@
 // src/components/auth/GoogleAuth.jsx
 import React, { useEffect, useContext } from 'react';
-import jwtDecode from 'jwt-decode';
+import {jwtDecode }from 'jwt-decode';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
