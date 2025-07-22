@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
+import {jwtDecode} from 'jwt-decode';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -37,6 +39,28 @@ const Register = () => {
       setMsg({ type: 'error', text: error });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 👇 Google Sign-In handler
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const decoded = jwtDecode(credentialResponse.credential);
+
+      const googleData = {
+        fullName: decoded.name,
+        email: decoded.email,
+        googleId: decoded.sub,
+        profilePicture: decoded.picture,
+      };
+
+      const res = await axios.post('http://localhost:5000/api/auth/google', googleData);
+
+      localStorage.setItem('token', res.data.token);
+      navigate('/');
+    } catch (error) {
+      console.error('Google Login Failed', error);
+      setMsg({ type: 'error', text: 'Google Login Failed' });
     }
   };
 
@@ -106,6 +130,10 @@ const Register = () => {
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
+
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setMsg({ type: 'error', text: 'Google login failed' })} />
+        </div>
 
         <p className="text-gray-400 text-center text-sm">
           Already have an account?{' '}
