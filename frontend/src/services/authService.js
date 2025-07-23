@@ -1,8 +1,9 @@
 import axios from 'axios';
 
+// Set up axios instance
 const API = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/auth`,
-  withCredentials: true,
+  withCredentials: true, // allow sending cookies if your backend uses them
 });
 
 // Register user
@@ -38,13 +39,24 @@ export const logoutUser = async () => {
   }
 };
 
-// Get logged-in user
-export const getLoggedInUser = async () => {
+// Get logged-in user's profile
+export const getUserProfile = async () => {
   try {
     const response = await API.get('/me');
     return response.data;
   } catch (error) {
-    console.error('Get User Error:', error);
+    console.error('Get User Profile Error:', error);
+    throw error.response?.data || error.message;
+  }
+  
+};
+// OTP verification
+export const verifyOtp = async ({ email, otp }) => {
+  try {
+    const response = await API.post('/verify-otp', { email, otp });
+    return response.data;
+  } catch (error) {
+    console.error('OTP Verification Error:', error);
     throw error.response?.data || error.message;
   }
 };
