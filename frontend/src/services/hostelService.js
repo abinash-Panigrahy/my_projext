@@ -45,3 +45,16 @@ export const getMyHostels = async () => {
   });
   return res.data;
 };
+// Get reviews
+export const getReviewsByHostelId = async (hostelId) => {
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/hostels/${hostelId}/reviews`);
+  return res.data;
+};
+
+// Submit review
+export const submitReview = async (hostelId, reviewData) => {
+  const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/hostels/${hostelId}/reviews`, reviewData, {
+    withCredentials: true,
+  });
+  return res.data;
+};
