@@ -1,22 +1,44 @@
-const mongoose = require('mongoose');
-const validator = require('validator');
+// models/User.js
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
   email: {
     type: String,
     required: true,
     unique: true,
     lowercase: true,
-    validate: validator.isEmail
   },
-  password: { type: String, required: true },
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   role: {
     type: String,
-    enum: ['user', 'admin', 'superadmin'],
-    default: 'user'
+    enum: ['user', 'hostel-admin', 'super-admin'],
+    default: 'user',
   },
-  verified: { type: Boolean, default: false }
+  password: {
+    type: String,
+    required: true,
+  },
+  otp: {
+    code: String,
+    expiresAt: Date,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);
