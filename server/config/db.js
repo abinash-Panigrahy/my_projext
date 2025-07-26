@@ -9,9 +9,9 @@ const connectDB = async () => {
       dbName: 'hostel_pg_marketplace', // Optional: Set your DB name
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(` MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`❌ MongoDB connection error: ${error.message}`);
+    console.error(` MongoDB connection error: ${error.message}`);
     process.exit(1); // Exit process with failure
   }
 };
