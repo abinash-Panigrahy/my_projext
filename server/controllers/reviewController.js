@@ -1,68 +1,106 @@
-const Hostel = require("../models/Hostel");
-const Room = require("../models/Room");
 const Review = require("../models/Review");
+const Hostel = require("../models/Hostel");
 const asyncHandler = require("express-async-handler");
 
-// @desc    Get all approved hostels (for public/user explore page)
-// @route   GET /api/hostels
-// @access  Public
-exports.getAllHostels = asyncHandler(async (req, res) => {
-  const { city, search } = req.query;
+// @desc    Create a review for a hostel
+// @route   POST /api/reviews/:hostelId
+// @access  Private (user, student)
+exports.createReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+  const { hostelId } = req.params;
 
-  const query = {
-    isApproved: true, // Only approved hostels
-  };
-
-  if (city) {
-    query.city = { $regex: new RegExp(city, "i") };
-  }
-
-  if (search) {
-    query.name = { $regex: new RegExp(search, "i") };
-  }
-
-  const hostels = await Hostel.find(query).populate("admin", "name email");
-
-  res.status(200).json(hostels);
-});
-
-// @desc    Get single hostel by ID with room & review details
-// @route   GET /api/hostels/:id
-// @access  Public
-exports.getHostelById = asyncHandler(async (req, res) => {
-  const hostelId = req.params.id;
-
-  const hostel = await Hostel.findById(hostelId)
-    .populate("admin", "name email")
-    .lean();
-
+  const hostel = await Hostel.findById(hostelId);
   if (!hostel) {
     res.status(404);
     throw new Error("Hostel not found");
   }
 
-  // Get rooms and reviews
-  const rooms = await Room.find({ hostel: hostelId });
-  const reviews = await Review.find({ hostel: hostelId }).populate("user", "name");
+  const existingReview = await Review.findOne({
+    user: req.user._id,
+    hostel: hostelId,
+  });
 
-  hostel.rooms = rooms;
-  hostel.reviews = reviews;
+  if (existingReview) {
+    res.status(400);
+    throw new Error("You have already reviewed this hostel");
+  }
 
-  res.status(200).json(hostel);
+  const review = await Review.create({
+    user: req.user._id,
+    hostel: hostelId,
+    rating,
+    comment,
+  });
+
+  res.status(201).json(review);
 });
 
-// @desc    Check availability of rooms in a hostel
-// @route   GET /api/hostels/:id/availability
+// @desc    Get all reviews for a specific hostel
+// @route   GET /api/reviews/hostel/:hostelId
 // @access  Public
-exports.getAvailability = asyncHandler(async (req, res) => {
-  const hostelId = req.params.id;
+exports.getHostelReviews = asyncHandler(async (req, res) => {
+  const { hostelId } = req.params;
 
-  const rooms = await Room.find({ hostel: hostelId });
-  const availableRooms = rooms.filter(room => room.capacity > 0);
+  const reviews = await Review.find({ hostel: hostelId }).populate("user", "name");
+  res.status(200).json(reviews);
+});
 
-  res.status(200).json({
-    total: rooms.length,
-    available: availableRooms.length,
-    availableRooms,
-  });
+// @desc    Update a review
+// @route   PUT /api/reviews/:reviewId
+// @access  Private (user, student)
+exports.updateReview = asyncHandler(async (req, res) => {
+  const { reviewId } = req.params;
+  const { rating, comment } = req.body;
+
+  const review = await Review.findById(reviewId);
+  if (!review) {
+    res.status(404);
+    throw new Error("Review not found");
+  }
+
+  if (review.user.toString() !== req.user._id.toString()) {
+    res.status(401);
+    throw new Error("Not authorized to update this review");
+  }
+
+  review.rating = rating || review.rating;
+  review.comment = comment || review.comment;
+
+  const updatedReview = await review.save();
+  res.status(200).json(updatedReview);
+});
+
+// @desc    Delete a review
+// @route   DELETE /api/reviews/:reviewId
+// @access  Private (user, student, admin, superAdmin)
+exports.deleteReview = asyncHandler(async (req, res) => {
+  const { reviewId } = req.params;
+
+  const review = await Review.findById(reviewId);
+  if (!review) {
+    res.status(404);
+    throw new Error("Review not found");
+  }
+
+  if (
+    review.user.toString() !== req.user._id.toString() &&
+    !["admin", "superAdmin"].includes(req.user.role)
+  ) {
+    res.status(403);
+    throw new Error("Not authorized to delete this review");
+  }
+
+  await review.remove();
+  res.status(200).json({ message: "Review deleted successfully" });
+});
+
+// @desc    Get all reviews (for superAdmin panel)
+// @route   GET /api/reviews/
+// @access  Private (superAdmin)
+exports.getAllReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find({})
+    .populate("user", "name email")
+    .populate("hostel", "name city");
+
+  res.status(200).json(reviews);
 });

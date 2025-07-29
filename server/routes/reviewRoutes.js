@@ -11,21 +11,19 @@ const {
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-//  Create a review (Only logged-in users who stayed in hostel)
+// Create review for a hostel
 router.post("/:hostelId", protect, authorizeRoles("user", "student"), createReview);
 
-//  Get all reviews for a specific hostel (Public)
+// Get all reviews for a hostel
 router.get("/hostel/:hostelId", getHostelReviews);
 
-//  Update a user's own review
+// Update a specific review
 router.put("/:reviewId", protect, authorizeRoles("user", "student"), updateReview);
 
-//  Delete own review or allow admin/super admin to delete any
+// Delete a review (user who posted or admin/superAdmin)
 router.delete("/:reviewId", protect, authorizeRoles("user", "student", "admin", "superAdmin"), deleteReview);
 
-//  (Optional) Get all reviews (for SuperAdmin Panel analytics, moderation)
+// Get all reviews (for superAdmin)
 router.get("/", protect, authorizeRoles("superAdmin"), getAllReviews);
 
-// module.exports = router;
-
-export default router;
+module.exports = router;

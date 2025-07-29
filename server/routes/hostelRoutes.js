@@ -1,50 +1,37 @@
 const express = require("express");
 const router = express.Router();
-
 const {
-  getAllHostels,
-  getHostelById,
-  createHostel,
-  updateHostel,
-  deleteHostel,
-  addRoomToHostel,
-  removeRoomFromHostel,
-  updateFoodMenu,
-  updateFeeStructure,
-  getLiveAvailability,
-} = require("../controllers/hostelController");
+  registerUser,
+  loginUser,
+  verifyOtp,
+  googleAuth,
+} = require("../controllers/authController");
 
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
-// Public routes
-router.get("/", getAllHostels); // View all hostels
-router.get("/:id", getHostelById); // View hostel by ID
-router.get("/:id/availability", getLiveAvailability); // Live room availability
+// @route   POST /api/auth/register
+// @desc    Register a new user (User, Admin, etc.)
+// @access  Public
+router.post("/register", registerUser);
 
-// Protected routes - Hostel Admin only
-router.post("/", protect, authorizeRoles("hostelAdmin"), createHostel); // Add new hostel
-router.put("/:id", protect, authorizeRoles("hostelAdmin"), updateHostel); // Edit hostel
-router.delete("/:id", protect, authorizeRoles("hostelAdmin"), deleteHostel); // Delete hostel
+// @route   POST /api/auth/login
+// @desc    Login with email/password
+// @access  Public
+router.post("/login", loginUser);
 
-router.post(
-  "/:id/rooms",
-  protect,
-  authorizeRoles("hostelAdmin"),
-  addRoomToHostel
-); // Add room
-router.delete(
-  "/:id/rooms/:roomId",
-  protect,
-  authorizeRoles("hostelAdmin"),
-  removeRoomFromHostel
-); // Remove room
+// @route   POST /api/auth/verify-otp
+// @desc    OTP verification during registration
+// @access  Public
+router.post("/verify-otp", verifyOtp);
 
-router.put("/:id/food", protect, authorizeRoles("hostelAdmin"), updateFoodMenu); // Update food menu
-router.put(
-  "/:id/fees",
-  protect,
-  authorizeRoles("hostelAdmin"),
-  updateFeeStructure
-); // Update fee structure
+// @route   POST /api/auth/google
+// @desc    Google OAuth login (Optional feature)
+// @access  Public
+router.post("/google", googleAuth);
+
+// Optionally protected route to test login
+router.get("/me", protect, (req, res) => {
+  res.status(200).json({ user: req.user });
+});
 
 module.exports = router;

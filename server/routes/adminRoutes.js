@@ -1,5 +1,7 @@
-import express from "express";
-import {
+const express = require("express");
+const router = express.Router();
+
+const {
   getHostelAdminDashboard,
   addFloor,
   addRoom,
@@ -10,12 +12,10 @@ import {
   getStudents,
   trackRentPayment,
   getHostelDetailsForAdmin,
-} from "../controllers/adminController.js";
-import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
+} = require("../controllers/adminController");
 
-const router = express.Router();
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-// All routes are protected and restricted to 'admin' role
 router.use(protect, authorizeRoles("admin"));
 
 router.get("/dashboard", getHostelAdminDashboard);
@@ -24,9 +24,10 @@ router.post("/hostel/floor", addFloor);
 router.post("/hostel/floor/:floorId/room", addRoom);
 router.put("/room/:roomId/availability", updateRoomAvailability);
 router.post("/food-menu", addFoodMenu);
-router.get("/food-menu", getFoodMenu);
+router.get("/food-menu", getFoodMenu); 
 router.post("/students", addStudent);
 router.get("/students", getStudents);
 router.post("/students/:studentId/rent", trackRentPayment);
 
-export default router;
+module.exports = router;
+ 
