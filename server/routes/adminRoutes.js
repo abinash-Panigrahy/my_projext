@@ -1,33 +1,27 @@
 const express = require("express");
 const router = express.Router();
-
 const {
-  getHostelAdminDashboard,
-  addFloor,
-  addRoom,
-  updateRoomAvailability,
-  addFoodMenu,
-  getFoodMenu,
+  addHostel,
+  addRooms,
   addStudent,
-  getStudents,
-  trackRentPayment,
-  getHostelDetailsForAdmin,
+  getMyHostels,
 } = require("../controllers/adminController");
 
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
+// Apply middleware to all routes below
 router.use(protect, authorizeRoles("admin"));
 
-router.get("/dashboard", getHostelAdminDashboard);
-router.get("/hostel", getHostelDetailsForAdmin);
-router.post("/hostel/floor", addFloor);
-router.post("/hostel/floor/:floorId/room", addRoom);
-router.put("/room/:roomId/availability", updateRoomAvailability);
-router.post("/food-menu", addFoodMenu);
-router.get("/food-menu", getFoodMenu); 
-router.post("/students", addStudent);
-router.get("/students", getStudents);
-router.post("/students/:studentId/rent", trackRentPayment);
+// @route POST /api/admin/hostels
+router.post("/hostels", addHostel);
+
+// @route POST /api/admin/hostels/:id/rooms
+router.post("/hostels/:id/rooms", addRooms);
+
+// @route POST /api/admin/hostels/:hostelId/rooms/:roomId/students
+router.post("/hostels/:hostelId/rooms/:roomId/students", addStudent);
+
+// @route GET /api/admin/hostels
+router.get("/hostels", getMyHostels);
 
 module.exports = router;
- 
