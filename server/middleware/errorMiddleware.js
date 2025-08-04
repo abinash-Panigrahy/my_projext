@@ -9,5 +9,4 @@ export const errorHandler = (err, req, res, next) => {
     message: err.message,
     stack: process.env.NODE_ENV === 'production' ? null : err.stack,
   });
-}; //this is the error handler middleware
-// It captures errors and sends a JSON response with the error message and stack trace if not in
+};
