@@ -8,7 +8,6 @@ const connectDB = async () => {
       useUnifiedTopology: true,
       dbName: 'hostel_pg_marketplace', // Optional: Set your DB name
     });
-
     console.log(` MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(` MongoDB connection error: ${error.message}`);
