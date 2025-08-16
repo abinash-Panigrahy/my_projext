@@ -1,11 +1,11 @@
-const Review = require("../models/Review");
-const Hostel = require("../models/Hostel");
-const asyncHandler = require("express-async-handler");
+import Review from "../models/Review.js";
+import Hostel from "../models/Hostel.js";
+import asyncHandler from "express-async-handler";
 
 // @desc    Create a review for a hostel
 // @route   POST /api/reviews/:hostelId
 // @access  Private (user, student)
-exports.createReview = asyncHandler(async (req, res) => {
+export const createReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
   const { hostelId } = req.params;
 
@@ -38,7 +38,7 @@ exports.createReview = asyncHandler(async (req, res) => {
 // @desc    Get all reviews for a specific hostel
 // @route   GET /api/reviews/hostel/:hostelId
 // @access  Public
-exports.getHostelReviews = asyncHandler(async (req, res) => {
+export const getHostelReviews = asyncHandler(async (req, res) => {
   const { hostelId } = req.params;
 
   const reviews = await Review.find({ hostel: hostelId }).populate("user", "name");
@@ -48,7 +48,7 @@ exports.getHostelReviews = asyncHandler(async (req, res) => {
 // @desc    Update a review
 // @route   PUT /api/reviews/:reviewId
 // @access  Private (user, student)
-exports.updateReview = asyncHandler(async (req, res) => {
+export const updateReview = asyncHandler(async (req, res) => {
   const { reviewId } = req.params;
   const { rating, comment } = req.body;
 
@@ -73,7 +73,7 @@ exports.updateReview = asyncHandler(async (req, res) => {
 // @desc    Delete a review
 // @route   DELETE /api/reviews/:reviewId
 // @access  Private (user, student, admin, superAdmin)
-exports.deleteReview = asyncHandler(async (req, res) => {
+export const deleteReview = asyncHandler(async (req, res) => {
   const { reviewId } = req.params;
 
   const review = await Review.findById(reviewId);
@@ -97,7 +97,7 @@ exports.deleteReview = asyncHandler(async (req, res) => {
 // @desc    Get all reviews (for superAdmin panel)
 // @route   GET /api/reviews/
 // @access  Private (superAdmin)
-exports.getAllReviews = asyncHandler(async (req, res) => {
+export const getAllReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.find({})
     .populate("user", "name email")
     .populate("hostel", "name city");

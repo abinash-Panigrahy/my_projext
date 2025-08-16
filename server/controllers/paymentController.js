@@ -1,11 +1,11 @@
-const Razorpay = require("razorpay");
-const crypto = require("crypto");
-const asyncHandler = require("express-async-handler");
-const Subscription = require("../models/Subscription");
-const User = require("../models/User");
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import asyncHandler from "express-async-handler";
+import Subscription from "../models/Subscription.js";
+import User from "../models/User.js"; 
 
 // Razorpay instance (use .env values)
-const razorpay = new Razorpay({
+export const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
 });
@@ -13,7 +13,7 @@ const razorpay = new Razorpay({
 // @desc    Create Razorpay Order
 // @route   POST /api/payments/create-order
 // @access  Private (Hostel Admin)
-exports.createOrder = asyncHandler(async (req, res) => {
+export const createOrder = asyncHandler(async (req, res) => {
   const { amount, plan } = req.body;
 
   if (!amount || !plan) {
@@ -40,7 +40,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
 // @desc    Verify payment and activate subscription
 // @route   POST /api/payments/verify
 // @access  Private (Hostel Admin)
-exports.verifyPayment = asyncHandler(async (req, res) => {
+export const verifyPayment = asyncHandler(async (req, res) => {
   const {
     razorpay_order_id,
     razorpay_payment_id,

@@ -1,13 +1,11 @@
-const asyncHandler = require("express-async-handler");
-const User = require("../models/User");
-const Hostel = require("../models/Hostel");
-// const Booking = require("../models/Booking"); // If you store bookings
-const Review = require("../models/Review");
-
+import asyncHandler from "express-async-handler";
+import User from "../models/User.js";
+import Hostel from "../models/Hostel.js";
+import Review from "../models/Review.js";
 // @desc    Get logged-in user's profile
 // @route   GET /api/users/profile
 // @access  Private (user only)
-const getUserProfile = asyncHandler(async (req, res) => {
+export const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
   if (!user) {
     res.status(404);
@@ -19,7 +17,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private (user only)
-const updateUserProfile = asyncHandler(async (req, res) => {
+export const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
   if (!user) {
     res.status(404);
@@ -45,7 +43,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 // @desc    Get hostel recommendations for user
 // @route   GET /api/users/recommendations
 // @access  Private (user only)
-const getRecommendedHostels = asyncHandler(async (req, res) => {
+export const getRecommendedHostels = asyncHandler(async (req, res) => {
   // Basic recommendation logic: return hostels in user's preferred city
   const user = await User.findById(req.user.id);
   if (!user || !user.city) {
@@ -60,7 +58,7 @@ const getRecommendedHostels = asyncHandler(async (req, res) => {
 // @desc    Submit feedback
 // @route   POST /api/users/feedback
 // @access  Private (user only)
-const submitFeedback = asyncHandler(async (req, res) => {
+export const submitFeedback = asyncHandler(async (req, res) => {
   const { hostelId, rating, comment } = req.body;
 
   if (!hostelId || !rating || !comment) {
@@ -88,15 +86,7 @@ const submitFeedback = asyncHandler(async (req, res) => {
 // @desc    Get user booking/payment history
 // @route   GET /api/users/bookings
 // @access  Private (user only)
-const getMyBookings = asyncHandler(async (req, res) => {
+export const getMyBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find({ user: req.user.id }).sort({ createdAt: -1 });
   res.status(200).json(bookings);
 });
-
-module.exports = {
-  getUserProfile,
-  updateUserProfile,
-  getRecommendedHostels,
-  submitFeedback,
-  getMyBookings,
-};
