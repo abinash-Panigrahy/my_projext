@@ -1,13 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const {
+// routes/authRoutes.js
+
+import express from "express";
+import {
   registerUser,
   loginUser,
   verifyOtp,
   googleAuth,
-} = require("../controllers/authController");
+} from "../controllers/authController.js";
 
-const { protect } = require("../middleware/authMiddleware");
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 // @route   POST /api/auth/register
 // @desc    Register a new user (User, Admin, etc.)
@@ -29,9 +32,11 @@ router.post("/verify-otp", verifyOtp);
 // @access  Public
 router.post("/google", googleAuth);
 
-// Optionally protected route to test login
+// @route   GET /api/auth/me
+// @desc    Check user session / token
+// @access  Private
 router.get("/me", protect, (req, res) => {
   res.status(200).json({ user: req.user });
 });
 
-module.exports = router;
+export default router;

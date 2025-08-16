@@ -1,15 +1,17 @@
-const express = require("express");
-const router = express.Router();
+// routes/reviewRoutes.js
 
-const {
+import express from "express";
+import {
   createReview,
   getHostelReviews,
   updateReview,
   deleteReview,
   getAllReviews,
-} = require("../controllers/reviewController");
+} from "../controllers/reviewController.js";
 
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 // Create review for a hostel
 router.post("/:hostelId", protect, authorizeRoles("user", "student"), createReview);
@@ -26,4 +28,4 @@ router.delete("/:reviewId", protect, authorizeRoles("user", "student", "admin", 
 // Get all reviews (for superAdmin)
 router.get("/", protect, authorizeRoles("superAdmin"), getAllReviews);
 
-module.exports = router;
+export default router;

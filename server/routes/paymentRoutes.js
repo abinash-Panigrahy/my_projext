@@ -1,33 +1,35 @@
-const express = require("express");
-const router = express.Router();
+// routes/paymentRoutes.js
 
-const {
+import express from "express";
+import {
   createSubscription,
   verifySubscription,
   cancelSubscription,
   getUserSubscription,
   payRent,
   getPaymentHistory,
-} = require("../controllers/paymentController");
+} from "../controllers/paymentController.js";
 
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
-//  User/Hostel Admin: View current subscription
+const router = express.Router();
+
+// User/Hostel Admin: View current subscription
 router.get("/subscription", protect, getUserSubscription);
 
-//  Pay rent (for students)
+// Pay rent (for students)
 router.post("/rent", protect, authorizeRoles("student"), payRent);
 
-//  Subscription creation (Hostel Admin)
+// Subscription creation (Hostel Admin)
 router.post("/subscription", protect, authorizeRoles("hostelAdmin"), createSubscription);
 
-//  Verify subscription payment (Razorpay webhook or post-payment)
+// Verify subscription payment
 router.post("/subscription/verify", protect, authorizeRoles("hostelAdmin"), verifySubscription);
 
-//  Cancel subscription
+// Cancel subscription
 router.delete("/subscription", protect, authorizeRoles("hostelAdmin"), cancelSubscription);
 
 // View payment history (Admin or Super Admin)
 router.get("/history", protect, authorizeRoles("hostelAdmin", "superAdmin"), getPaymentHistory);
 
-module.exports = router;
+export default router;

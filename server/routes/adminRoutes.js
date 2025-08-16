@@ -1,13 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const {
+// routes/adminRoutes.js
+
+import express from "express";
+import {
   addHostel,
   addRooms,
   addStudent,
   getMyHostels,
-} = require("../controllers/adminController");
+} from "../controllers/adminController.js";
 
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 // Apply middleware to all routes below
 router.use(protect, authorizeRoles("admin"));
@@ -24,4 +27,4 @@ router.post("/hostels/:hostelId/rooms/:roomId/students", addStudent);
 // @route GET /api/admin/hostels
 router.get("/hostels", getMyHostels);
 
-module.exports = router;
+export default router;
