@@ -1,15 +1,17 @@
-const nodemailer = require("nodemailer");
+// services/emailService.js
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
-// Use your actual credentials or store securely in .env
+dotenv.config(); // Ensure dotenv is configured for services too
+
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Or use 'ethereal' or SMTP provider
+  service: "gmail", // Or your preferred SMTP provider (e.g., SendGrid, Mailgun)
   auth: {
     user: process.env.EMAIL_USERNAME,
     pass: process.env.EMAIL_PASSWORD,
   },
 });
 
-// Generic reusable function
 const sendEmail = async ({ to, subject, html }) => {
   try {
     const mailOptions = {
@@ -18,17 +20,16 @@ const sendEmail = async ({ to, subject, html }) => {
       subject,
       html,
     };
-
     await transporter.sendMail(mailOptions);
     console.log(`✅ Email sent to ${to}`);
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error.message);
+    // You might want to re-throw or handle more gracefully based on your needs
     throw new Error("Email sending failed.");
   }
 };
 
-// Example for OTP
-const sendOtpEmail = async (to, otp) => {
+export const sendOtpEmail = async (to, otp) => {
   const html = `
     <h2>OTP Verification</h2>
     <p>Your OTP is: <b>${otp}</b></p>
@@ -37,8 +38,7 @@ const sendOtpEmail = async (to, otp) => {
   await sendEmail({ to, subject: "OTP Verification", html });
 };
 
-// Example for approval
-const sendAdminApprovalEmail = async (to, name) => {
+export const sendAdminApprovalEmail = async (to, name) => {
   const html = `
     <h2>🎉 Account Approved!</h2>
     <p>Hello <b>${name}</b>, your hostel admin account has been approved!</p>
@@ -47,8 +47,5 @@ const sendAdminApprovalEmail = async (to, name) => {
   await sendEmail({ to, subject: "Hostel Admin Approval", html });
 };
 
-module.exports = {
-  sendEmail,
-  sendOtpEmail,
-  sendAdminApprovalEmail,
-};
+// You can export sendEmail as well if you need it generically
+export default sendEmail;

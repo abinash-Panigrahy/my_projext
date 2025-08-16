@@ -1,201 +1,148 @@
-const asyncHandler = require("express-async-handler");
-const Hostel = require("../models/Hostel");
-const Room = require("../models/Room");
-const Student = require("../models/Student");
+// controllers/adminController.js
+import Hostel from "../models/Hostel.js";
+import Room from "../models/Room.js";
+import Student from "../models/Student.js";
+import asyncHandler from "express-async-handler";
 
-// @desc    Get admin dashboard data
-// @route   GET /api/admin/dashboard
-// @access  Private (Admin)
-exports.getHostelAdminDashboard = asyncHandler(async (req, res) => {
-  const hostels = await Hostel.find({ admin: req.user._id }).populate("rooms");
-  const totalHostels = hostels.length;
+// @desc    Add a new hostel
+// @route   POST /api/admin/hostels
+// @access  Private (Hostel Admin)
+export const addHostel = asyncHandler(async (req, res) => {
+  const { name, address, city, rules } = req.body;
+  if (!name || !address || !city) {
+    res.status(400);
+    throw new Error("All fields are required.");
+  }
 
-  const totalRooms = await Room.countDocuments({ hostel: { $in: hostels.map(h => h._id) } });
-  const totalStudents = await Student.countDocuments({ hostel: { $in: hostels.map(h => h._id) } });
-
-  res.status(200).json({
-    totalHostels,
-    totalRooms,
-    totalStudents,
-    hostels,
+  const newHostel = new Hostel({
+    name,
+    address,
+    city,
+    rules,
+    owner: req.user._id, // Use 'owner' as per Hostel model
   });
+
+  const savedHostel = await newHostel.save();
+  res.status(201).json(savedHostel);
 });
 
-// @desc    Get hostel details for admin
-// @route   GET /api/admin/hostel
-// @access  Private (Admin)
-exports.getHostelDetailsForAdmin = asyncHandler(async (req, res) => {
-  const hostel = await Hostel.findOne({ admin: req.user._id }).populate("rooms");
+// @desc    Add rooms to a hostel
+// @route   POST /api/admin/hostels/:id/rooms
+// @access  Private (Hostel Admin)
+export const addRooms = asyncHandler(async (req, res) => {
+  const { roomNumber, capacity, rent, floor, gender } = req.body; // Added floor and gender for Room model
+  const hostelId = req.params.id;
 
-  if (!hostel) {
-    res.status(404);
-    throw new Error("Hostel not found");
+  if (!roomNumber || !capacity || !rent || floor === undefined) { // Check for floor
+    res.status(400);
+    throw new Error("Missing room fields: roomNumber, capacity, rent, and floor are required.");
   }
 
-  res.status(200).json(hostel);
-});
-
-// @desc    Add a new floor to hostel
-// @route   POST /api/admin/hostel/floor
-// @access  Private (Admin)
-exports.addFloor = asyncHandler(async (req, res) => {
-  const { floorNumber } = req.body;
-
-  const hostel = await Hostel.findOne({ admin: req.user._id });
+  const hostel = await Hostel.findById(hostelId);
   if (!hostel) {
     res.status(404);
-    throw new Error("Hostel not found");
+    throw new Error("Hostel not found.");
   }
 
-  hostel.floors.push({ floorNumber, rooms: [] });
-  await hostel.save();
-
-  res.status(201).json({ message: "Floor added", hostel });
-});
-
-// @desc    Add a room to a specific floor
-// @route   POST /api/admin/hostel/floor/:floorId/room
-// @access  Private (Admin)
-exports.addRoom = asyncHandler(async (req, res) => {
-  const { roomNumber, capacity, rent } = req.body;
-  const { floorId } = req.params;
-
-  const hostel = await Hostel.findOne({ admin: req.user._id });
-  if (!hostel) {
-    res.status(404);
-    throw new Error("Hostel not found");
-  }
-
-  const floor = hostel.floors.id(floorId);
-  if (!floor) {
-    res.status(404);
-    throw new Error("Floor not found");
+  // Check if roomNumber already exists for this hostel on this floor
+  const existingRoom = await Room.findOne({ hostel: hostelId, floor, roomNumber });
+  if (existingRoom) {
+    res.status(400);
+    throw new Error(`Room number ${roomNumber} already exists on floor ${floor} for this hostel.`);
   }
 
   const room = new Room({
-    hostel: hostel._id,
-    floor: floorId,
+    hostel: hostelId,
+    floor,
     roomNumber,
     capacity,
     rent,
-    availability: true,
+    gender,
   });
 
   const savedRoom = await room.save();
-  floor.rooms.push(savedRoom._id);
-  await hostel.save();
+
+  // Optionally, update the hostel's floors array
+  // This depends on how you want to manage rooms within the Hostel model's floors array
+  // If you store rooms directly in the Room model, you might not need this.
+  // For now, I'll keep it simple and just save the Room.
 
   res.status(201).json(savedRoom);
 });
 
-// @desc    Update room availability
-// @route   PUT /api/admin/room/:roomId/availability
-// @access  Private (Admin)
-exports.updateRoomAvailability = asyncHandler(async (req, res) => {
-  const { roomId } = req.params;
-  const { availability } = req.body;
+// @desc    Add a student to a hostel room
+// @route   POST /api/admin/hostels/:hostelId/rooms/:roomId/students
+// @access  Private (Hostel Admin)
+export const addStudent = asyncHandler(async (req, res) => {
+  const { name, email, phone, roomNumber: studentRoomNumber } = req.body; // Added studentRoomNumber from body
+  const { hostelId, roomId } = req.params;
 
-  const room = await Room.findById(roomId);
+  if (!name || !email || !phone || !studentRoomNumber) {
+    res.status(400);
+    throw new Error("Missing student fields: name, email, phone, and roomNumber are required.");
+  }
+
+  const room = await Room.findOne({ _id: roomId, hostel: hostelId });
   if (!room) {
     res.status(404);
-    throw new Error("Room not found");
+    throw new Error("Room not found in the specified hostel.");
   }
 
-  room.availability = availability;
-  await room.save();
-
-  res.status(200).json({ message: "Room availability updated", room });
-});
-
-// @desc    Add food menu
-// @route   POST /api/admin/food-menu
-// @access  Private (Admin)
-exports.addFoodMenu = asyncHandler(async (req, res) => {
-  const { menu } = req.body;
-
-  const hostel = await Hostel.findOne({ admin: req.user._id });
-  if (!hostel) {
-    res.status(404);
-    throw new Error("Hostel not found");
+  if (room.currentOccupancy >= room.capacity) {
+    res.status(400);
+    throw new Error("Room is already at full capacity.");
   }
 
-  hostel.foodMenu = menu;
-  await hostel.save();
+  // Check if student with this email or phone already exists in this hostel/room
+  const studentExists = await Student.findOne({
+    $or: [{ email }, { phone }],
+    hostel: hostelId,
+  });
 
-  res.status(201).json({ message: "Food menu added", menu });
-});
-
-// @desc    Get food menu
-// @route   GET /api/admin/food-menu
-// @access  Private (Admin)
-exports.getFoodMenu = asyncHandler(async (req, res) => {
-  const hostel = await Hostel.findOne({ admin: req.user._id });
-  if (!hostel) {
-    res.status(404);
-    throw new Error("Hostel not found");
-  }
-
-  res.status(200).json({ foodMenu: hostel.foodMenu || [] });
-});
-
-// @desc    Add student to hostel
-// @route   POST /api/admin/students
-// @access  Private (Admin)
-exports.addStudent = asyncHandler(async (req, res) => {
-  const { name, email, phone, roomId } = req.body;
-
-  const room = await Room.findById(roomId);
-  if (!room) {
-    res.status(404);
-    throw new Error("Room not found");
+  if (studentExists) {
+    res.status(400);
+    throw new Error("A student with this email or phone already exists in this hostel.");
   }
 
   const student = new Student({
     name,
     email,
     phone,
-    room: roomId,
-    hostel: room.hostel,
+    roomNumber: studentRoomNumber, // Use the roomNumber from the body
+    hostel: hostelId,
   });
 
   const savedStudent = await student.save();
+
+  // Update room occupancy and add student to room's students array
+  room.currentOccupancy += 1;
+  room.students.push(savedStudent._id);
+  room.isAvailable = room.currentOccupancy < room.capacity;
+  await room.save();
+
   res.status(201).json(savedStudent);
 });
 
-// @desc    Get all students in hostel
-// @route   GET /api/admin/students
-// @access  Private (Admin)
-exports.getStudents = asyncHandler(async (req, res) => {
-  const hostel = await Hostel.findOne({ admin: req.user._id });
-  if (!hostel) {
-    res.status(404);
-    throw new Error("Hostel not found");
-  }
-
-  const students = await Student.find({ hostel: hostel._id });
-  res.status(200).json(students);
-});
-
-// @desc    Track student rent payment
-// @route   POST /api/admin/students/:studentId/rent
-// @access  Private (Admin)
-exports.trackRentPayment = asyncHandler(async (req, res) => {
-  const { studentId } = req.params;
-  const { month, amount, status } = req.body;
-
-  const student = await Student.findById(studentId);
-  if (!student) {
-    res.status(404);
-    throw new Error("Student not found");
-  }
-
-  student.rentPayments.push({
-    month,
-    amount,
-    status,
-    paidOn: new Date(),
-  });
-
-  await student.save();
-  res.status(201).json({ message: "Rent payment recorded", rentPayments: student.rentPayments });
+// @desc    Get all hostels managed by current admin
+// @route   GET /api/admin/hostels
+// @access  Private (Hostel Admin)
+export const getMyHostels = asyncHandler(async (req, res) => {
+  // Populate 'floors.rooms' or directly rooms depending on your schema usage.
+  // Your Hostel model has 'floors' with 'rooms' nested.
+  // If you also have a top-level 'Room' collection, you might want to adjust.
+  // Assuming 'rooms' in Hostel model is an array of Room documents or ObjectIDs.
+  // If 'rooms' are a separate collection, populate them based on hostel ID.
+  const hostels = await Hostel.find({ owner: req.user._id })
+    .populate({
+      path: 'floors.rooms', // Correct path for nested rooms if you populate directly
+      model: 'Room' // Specify the model if not explicitly referenced in schema
+    })
+    // If you intend to populate from the separate Room collection
+    // .populate({
+    //   path: 'rooms', // Assuming 'rooms' field in Hostel refers to Room model (not in your schema)
+    //   model: 'Room',
+    //   match: { hostel: req.user._id } // Not correct if rooms are already linked by owner
+    // });
+    ;
+  res.status(200).json(hostels);
 });
